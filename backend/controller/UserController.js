@@ -53,7 +53,7 @@ const login = async (req, res) => {
     if (!foundUser)
       return res.status(401).json({ message: "Invalid credentials" });
 
-    // Check password (with auto-upgrade for old unhashed passwords)
+    // Check password (with auto-upgrade for old un hashed passwords)
     let isPasswordValid = false;
     if (foundUser.password?.startsWith("$2")) {
       isPasswordValid = await bcrypt.compare(password, foundUser.password);

@@ -1,54 +1,74 @@
+const mongoose = require("mongoose");
 const Products = require("../model/products");
 
-//add products
+// 1. Add Product
 const AddProduct = async (req, res) => {
   try {
-    const newProduct = req.body;
-    await Products.create(newProduct);
-    res.status(200).json({ message: "product added Successfully" });
+    const newProduct = await Products.create(req.body);
+    res.status(201).json({ message: "Product added successfully", newProduct });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "failed to add product" });
-  }
-};
-
-//deleted product
-const DeleteProduct = async (req, res) => {
-  try {
-    const deletedProduct = await Products.findByIdAndDelete(req.params.id);
     res
-      .status(200)
-      .json({ message: "product deleted Successfully", deletedProduct });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Failed to delete Product" });
+      .status(500)
+      .json({ message: "Failed to add product", err: error.message });
   }
 };
 
-// get all products
-
+// 2. Get All Products
 const GetProducts = async (req, res) => {
   try {
     const allProducts = await Products.find();
     res.status(200).json({ allProducts });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "failed to get Products", err: error });
+    res
+      .status(500)
+      .json({ message: "Failed to get products", err: error.message });
   }
 };
 
-// get product based on ID
+// 3. Get Product Based on ID
 const GetProductBasedOnId = async (req, res) => {
   try {
-    const foundProduct = await Products.findById(req.params.id);
-    res.status(200).json({ foundProduct });
+    const vendorId = req.user.id; // From your auth middleware token
+    const productId = req.params.id; // From your route URL /getproduct/:id
+
+    const foundProduct = await Products.aggregate([
+      // 1. Match the specific product AND verify this vendor owns it
+      {
+        $match: {
+          vendorId: vendorId,
+          _id: new mongoose.Types.ObjectId(productId), // Fixed: match product ID
+        },
+      },
+      // 2. Lookup/Join the products collection
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "vendorId",
+          as: "ProductDetails",
+        },
+      },
+      // 3. Project stage moved inside the array
+      {
+        $project: { ProductDetails: 1, _id: 0 },
+      },
+    ]);
+
+    if (!foundProduct || foundProduct.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Product not found or you don't have access to it" });
+    }
+
+    res.status(200).json({ foundProduct: foundProduct[0] });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Failed to get Product" });
+    res
+      .status(500)
+      .json({ message: "Failed to get product", err: error.message });
   }
 };
 
-//update product based on ID
+// 4. Update Product
 const UpdateProduct = async (req, res) => {
   try {
     const updatedProduct = await Products.findByIdAndUpdate(
@@ -56,125 +76,151 @@ const UpdateProduct = async (req, res) => {
       req.body,
       { new: true },
     );
+    if (!updatedProduct)
+      return res.status(404).json({ message: "Product not found" });
+
     res.status(200).json({
-      message: "updated Successfully",
+      message: "Updated successfully",
       updatedProductDetails: updatedProduct,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "failed to update Product" });
+    res
+      .status(500)
+      .json({ message: "Failed to update product", err: error.message });
   }
 };
 
-//filter Products based on price
+// 5. Delete Product
+const DeleteProduct = async (req, res) => {
+  try {
+    const deletedProduct = await Products.findByIdAndDelete(req.params.id);
+    if (!deletedProduct)
+      return res.status(404).json({ message: "Product not found" });
+
+    res
+      .status(200)
+      .json({ message: "Product deleted successfully", deletedProduct });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Failed to delete product", err: error.message });
+  }
+};
+
+// 6. Filter Products on Price Range
 const FilterProductsOnPrice = async (req, res) => {
   try {
-    console.log(Number(req.query.min));
-    console.log(Number(req.query.max));
+    const min = Number(req.query.min) || 0;
+    const max = Number(req.query.max) || Infinity;
 
     const filteredProducts = await Products.find({
-      $and: [
-        { price: { $gte: Number(req.query.min) } },
-        { price: { $lte: Number(req.query.max) } },
-      ],
+      price: { $gte: min, $lte: max },
     });
     res.status(200).json({ filteredProducts });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Failed to Filter products" });
+    res
+      .status(500)
+      .json({ message: "Failed to filter products", err: error.message });
   }
 };
 
-// filter products based on ratings
-
+// 7. Filter Products on Ratings
 const FilterProductsOnRatings = async (req, res) => {
   try {
     const filteredProducts = await Products.find({
-      ratings: req.query.ratings,
+      ratings: Number(req.query.ratings),
     });
-    res.status(200).json(filteredProducts);
+    res.status(200).json({ filteredProducts });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Failed to filter" });
+    res
+      .status(500)
+      .json({ message: "Failed to filter by ratings", err: error.message });
   }
 };
 
+// 8. Get Products with Pagination
 const getProductsWithPagination = async (req, res) => {
   try {
-    let page = parseInt(req.query.page) || 1; // 2
-    let limit = parseInt(req.query.limit) || 20; //20
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
 
-    const skip = (page - 1) * limit; // (2-1) *20   ->  1*20
-
-    const ProductRecords = await Products.aggregate([
-      { $skip: skip },
-      { $limit: limit },
-    ]);
-    res.status(200).json({
-      success: true,
-      currentPage: page,
-      ProductRecords,
-    });
+    const ProductRecords = await Products.find().skip(skip).limit(limit);
+    res
+      .status(200)
+      .json({ success: true, currentPage: page, limit, ProductRecords });
   } catch (error) {
-    res.status(500).json({ message: "failed to get products" });
-    console.log(error);
+    res.status(500).json({
+      message: "Failed to get paginated products",
+      err: error.message,
+    });
   }
 };
 
+// 9. Get Products Based on Specific Price Range (Note: Assuming schema uses 'price', not 'cost')
 const getProductsBasedOnPrice = async (req, res) => {
   try {
     const { minPrice, maxPrice } = req.query;
+    // Changed 'cost' to 'price' assuming that is your schema property
     const filteredProducts = await Products.find({
-      cost: { $gte: minPrice, $lte: maxPrice },
+      price: { $gte: minPrice, $lte: maxPrice },
     });
-    if (filteredProducts.length == 0) {
+
+    if (filteredProducts.length === 0) {
       return res.status(404).json({
-        message: `No products found in the specified price range ${minPrice} To ${maxPrice}`,
+        message: `No products found between ${minPrice} and ${maxPrice}`,
       });
-    } else {
-      res.status(200).json({ filteredProducts });
     }
+    res.status(200).json({ filteredProducts });
   } catch (error) {
-    console.log(error);
-    res
-      .status(500)
-      .json({ message: "Failed to filter products based on price" });
+    res.status(500).json({
+      message: "Failed to filter products based on price",
+      err: error.message,
+    });
   }
 };
 
+// 10. Get Products Based on Brand
 const getProductsBasedOnBrand = async (req, res) => {
   try {
     const { brand } = req.query;
     const filteredProducts = await Products.find({
-      brand: brand.toLowerCase(),
+      brand: brand?.toLowerCase(),
     });
-    if (filteredProducts.length == 0) {
-      return res.status(404).json({
-        message: `No products found for the specified brand ${brand}`,
-      });
-    } else {
-      res.status(200).json({ filteredProducts });
+
+    if (filteredProducts.length === 0) {
+      return res
+        .status(404)
+        .json({ message: `No products found for brand: ${brand}` });
     }
+    res.status(200).json({ filteredProducts });
   } catch (error) {
-    console.log(error);
+    res
+      .status(500)
+      .json({ message: "Failed to filter by brand", err: error.message }); // Fixed missing response
   }
 };
 
+// 11. Get Limited Products (Redundant to pagination, but cleaned up)
 const getLimitedProducts = async (req, res) => {
   try {
-    const { pages, limit } = req.query;
+    const pages = parseInt(req.query.pages) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
     const foundProducts = await Products.find()
       .skip((pages - 1) * limit)
       .limit(limit);
-    if (foundProducts.length == 0) {
-      return res.status(404).json({
-        message: `No products found for the specified page ${pages} and limit ${limit}`,
-      });
+
+    if (foundProducts.length === 0) {
+      return res
+        .status(404)
+        .json({ message: `No products found for page ${pages}` });
     }
-    res.status(200).json({ currentPage: pages, limit: limit, foundProducts });
+    res.status(200).json({ currentPage: pages, limit, foundProducts });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Failed to get limited products" });
+    res
+      .status(500)
+      .json({ message: "Failed to get limited products", err: error.message });
   }
 };
 
