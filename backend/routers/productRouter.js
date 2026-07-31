@@ -14,9 +14,11 @@ const {
   getLimitedProducts,
 } = require("../controller/ProductsController");
 
+const { isAdmin, isUser } = require("../middleware/userRoleAuth");
+
 // Core CRUD Endpoints
 router.post("/addproduct", AddProduct);
-router.get("/getproducts", GetProducts);
+router.get("/getproducts", isUser, GetProducts);
 router.get("/getproduct/:id", GetProductBasedOnId);
 router.put("/updateproduct/:id", UpdateProduct);
 router.delete("/deleteproduct/:id", DeleteProduct);
