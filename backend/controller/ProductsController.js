@@ -56,7 +56,7 @@ const UpdateProduct = async (req, res) => {
       req.body,
       { new: true },
     );
-    res.status(200).json({
+    res.status(200).json({iPad
       message: "updated Successfully",
       updatedProductDetails: updatedProduct,
     });
@@ -121,6 +121,23 @@ const getProductsWithPagination = async (req, res) => {
   }
 };
 
+const getProductsBasedOnPrice = async (req, res) => {
+    try {
+        const { minPrice, maxPrice } = req.query;
+        const filteredProducts = await Products.find({
+            cost: { $gte: minPrice, $lte: maxPrice }
+        });
+        if(filteredProducts.length == 0) {
+            return res.status(404).json({ message: `No products found in the specified price range ${minPrice} To ${maxPrice}` });
+        } else {
+            res.status(200).json({ filteredProducts });
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Failed to filter products based on price" });
+    }
+};
+
 module.exports = {
   AddProduct,
   GetProducts,
@@ -128,5 +145,7 @@ module.exports = {
   DeleteProduct,
   UpdateProduct,
   FilterProductsOnPrice,
-  FilterProductsOnRatings,getProductsWithPagination
+  FilterProductsOnRatings,
+  getProductsWithPagination,
+  getProductsBasedOnPrice
 };
