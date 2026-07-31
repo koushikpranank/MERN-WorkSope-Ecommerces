@@ -1,0 +1,132 @@
+const express=require("express");
+const app=express();
+const port=5000;
+const MONGO_URI="mongodb://localhost:27017/ThinkerMart";
+const mongoose=require("mongoose");
+app.use(express.json());
+//connection configuration
+mongoose.connect(MONGO_URI).then(()=>console.log("db connected")).catch((err)=>console.log("not connected",err));
+
+app.post("/register", async (req, res) => {
+    try {
+        const userDetails = req.body;
+
+        const result = await user.create(userDetails);
+
+        res.status(201).json(result,"founduser");
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+        console.log(err);
+    }
+})
+app.get("/getusers", async (req, res) => {
+    try {
+        const foundUsers = await user.find();
+        if (foundUsers.length==0) {
+            return res.status(404).json({ message: "No users found" });
+        }   
+        res.status(200).json({ message: "Users found", users: foundUsers });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+        console.log(err);
+    }
+});
+app.put("/updateuser/:id", async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const updatedData = req.body;
+        res.status(200).json({ message: "User updated", user: await user.findByIdAndUpdate(userId, updatedData, { new: true }) });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+        console.log(err);
+    }
+});       
+app.delete("/deleteuser/:email", async (req, res) => {
+    try {
+        const email = req.params.email;
+        const deletedUser = await user.findOneAndDelete({ email: email });
+
+        if (!deletedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.status(200).json({ message: "User deleted", user: deletedUser });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+        console.log(err);
+    }
+});
+app.patch("/updatepassword/:email", async (req, res) => {
+    try {
+        const email = req.params.email;
+        const newPassword = req.body.password;
+        res.status(200).json({ message: "Password updated", user: await user.findOneAndUpdate({ email: email }, { password: newPassword }, { returnDocument: "after" }) });
+    }
+    catch (err) {
+        res.status(500).json({ message: err.message });
+        console.log(err);
+    }
+});
+app.listen(port,()=>{
+    console.log("server is running on port ",port);
+})
+//define user schema
+const UserSchema=new mongoose.Schema({
+    name:{type:String,required:true},
+    email:{type:String,required:true},
+    password:{type:String,required:true},
+    phoneno:{type:Number,required:true},
+    address:{type:String,required:true},
+    userRole:{type:String,required:true},
+    
+})
+const user=mongoose.model("user",UserSchema);
+app.post("/addproduct", async (req, res) => {
+    try {
+        const productDetails = req.body;
+        const result = await product.create(productDetails);
+        res.status(201).json(result);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+        console.log(err);
+    }
+});
+
+const ProductSchema=new mongoose.Schema({
+    productName:{type:String,required:true},
+    productDescription:{type:String,required:true},
+    productPrice:{type:Number,required:true},
+    productCategory:{type:String,required:true}})
+const product=mongoose.model("product",ProductSchema);
+
+
+
+
+//add user--add post method ---create()/insertOne()/ insertMany()
+
+//get all users --get http method -----find()/findOne()/findById()
+
+//delete user---delete method   
+
+// update all fileds --put method
+
+//single files--- patch method
+
+// reuqest-- body,params,query,headers
+
+/*
+Projectins
+-----------
+projections are used to select specific fields from the documents in a collection. 
+In MongoDB, you can use projections to limit the amount of data returned by a query. 
+This is useful for improving performance and reducing bandwidth usage when you only need certain fields from the documents.
+*/
+
+/*
+modules
+1.users--------user /SuperAdmin/vendor
+2.products
+3.orders
+4.carts
+5.transactions
+    */
