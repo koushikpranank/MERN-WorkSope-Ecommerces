@@ -160,6 +160,24 @@ const getProductsBasedOnBrand = async (req, res) => {
   }
 };
 
+const getLimitedProducts = async (req, res) => {
+  try {
+    const { pages, limit } = req.query;
+    const foundProducts = await Products.find()
+      .skip((pages - 1) * limit)
+      .limit(limit);
+    if (foundProducts.length == 0) {
+      return res.status(404).json({
+        message: `No products found for the specified page ${pages} and limit ${limit}`,
+      });
+    }
+    res.status(200).json({ currentPage: pages, limit: limit, foundProducts });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Failed to get limited products" });
+  }
+};
+
 module.exports = {
   AddProduct,
   GetProducts,
@@ -171,4 +189,5 @@ module.exports = {
   getProductsWithPagination,
   getProductsBasedOnPrice,
   getProductsBasedOnBrand,
+  getLimitedProducts,
 };
