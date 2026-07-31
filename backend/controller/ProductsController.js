@@ -142,6 +142,24 @@ const getProductsBasedOnPrice = async (req, res) => {
   }
 };
 
+const getProductsBasedOnBrand = async (req, res) => {
+  try {
+    const { brand } = req.query;
+    const filteredProducts = await Products.find({
+      brand: brand.toLowerCase(),
+    });
+    if (filteredProducts.length == 0) {
+      return res.status(404).json({
+        message: `No products found for the specified brand ${brand}`,
+      });
+    } else {
+      res.status(200).json({ filteredProducts });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 module.exports = {
   AddProduct,
   GetProducts,
@@ -152,4 +170,5 @@ module.exports = {
   FilterProductsOnRatings,
   getProductsWithPagination,
   getProductsBasedOnPrice,
+  getProductsBasedOnBrand,
 };
