@@ -1,4 +1,4 @@
-const mongoose = mongoose.model("mongoose");
+const mongoose=require("mongoose");
 
 const ProductsSchema = new mongoose.Schema({
     name: { type: String, required: true },
