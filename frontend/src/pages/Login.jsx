@@ -11,7 +11,7 @@ const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Login Data:", formData);
-    // Add your axios POST request here
+    axios.post("http://localhost:5001/api/login", formData);
   };
 
   return (

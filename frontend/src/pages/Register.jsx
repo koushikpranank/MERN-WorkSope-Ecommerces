@@ -21,7 +21,7 @@ const Register = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Registration Payload:", formData);
-    // axios.post('http://localhost:5001/api/register', formData)
+    axios.post("http://localhost:5001/api/register", formData);
   };
 
   return (
