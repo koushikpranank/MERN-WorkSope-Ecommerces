@@ -6,10 +6,12 @@ const {
   getUsers,
   deleteUser,
   updateUserDetails,
+  emailController,
 } = require("../controller/UserController");
 
 const { isAdmin } = require("../middleware/userRoleAuth");
 
+router.post("/send-otp", emailController);
 router.post("/register", Register);
 router.post("/login", Login);
 router.delete("/delete-user/:id", isAdmin, deleteUser);

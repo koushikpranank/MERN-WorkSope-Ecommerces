@@ -27,16 +27,18 @@ const emailController = async (req, res) => {
 const Register = async (req, res) => {
   try {
     const userDetails = req.body;
-    const foundUser = await Users.findOne({ email: userDetails.email });
-    if (foundUser == null) {
+    if (userDetails.otp == storeOtp.get("otp")) {
       const hashedPassword = await bcrypt.hash(userDetails.password, 10);
+      storeOtp.delete("otp");
+      delete userDetails.otp; // Remove OTP from userDetails before saving
       await Users.create({ ...userDetails, password: hashedPassword });
       res.status(200).json({ message: "register successfully" });
+      sendWelcomeEmail(userDetails.email, userDetails.firstName);
     } else {
-      res.status(501).json({ message: "user already exists" });
+      res.status(401).json({ message: "invalid otp" });
     }
   } catch (error) {
-    res.status(500).json({ message: "failed to register" });
+    res.status(501).json({ message: "failed to register" });
     console.log(error);
   }
 };
