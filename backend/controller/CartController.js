@@ -1,5 +1,6 @@
 const Cart = require("../model/cart");
 const mongoose = require("mongoose");
+const { sendOrderPlacedEmail } = require("../services/emailServices");
 //add cart
 const AddToCart = async (req, res) => {
   try {

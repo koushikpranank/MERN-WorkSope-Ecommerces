@@ -1,6 +1,7 @@
-const mongoose=require("mongoose");
+const mongoose = require("mongoose");
 
-const ProductsSchema = new mongoose.Schema({
+const ProductsSchema = new mongoose.Schema(
+  {
     name: { type: String, required: true },
     brand: { type: String, required: true },
     cost: { type: String, required: true },
@@ -9,8 +10,10 @@ const ProductsSchema = new mongoose.Schema({
     reviews: { type: String, required: true },
     quantity: { type: String, required: true },
     discount: { type: String, required: true },
-},{timestamps: true});
+  },
+  { timestamps: true },
+);
 
 const ProductsModel = mongoose.model("products", ProductsSchema);
 
-// module.exports = ProductsModel;
+module.exports = ProductsModel; // <-- Removed the //
