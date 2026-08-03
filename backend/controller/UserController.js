@@ -1,6 +1,7 @@
 const Users = require("../model/users");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { sendOTPEmail, sendWelcomeEmail } = require("../services/emailServices");
 
 // register
 const Register = async (req, res) => {
@@ -9,8 +10,12 @@ const Register = async (req, res) => {
     const foundUser = await Users.findOne({ email: userDetails.email });
     if (foundUser == null) {
       const hashedPassword = await bcrypt.hash(userDetails.password, 10);
+
+      const otp = Math.floor(Math.random() * 10000000);
+      await sendOTPEmail(userDetails.email, otp);
       await Users.insertOne({ ...userDetails, password: hashedPassword });
       res.status(200).json({ message: "register successfully" });
+      await sendWelcomeEmail(userDetails.email, userDetails.firstName);
     } else {
       res.status(501).json({ message: "user already exists" });
     }

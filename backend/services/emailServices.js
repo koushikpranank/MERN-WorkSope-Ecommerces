@@ -1,7 +1,7 @@
 const transport = require("../config/emailConfig");
 
 // Registration Otp Email
-const sendOtpEmail = async (email, otp) => {
+const sendOTPEmail = async (email, otp) => {
   const htmlTemplate = `<!doctype html>
 <html>
   <head>
@@ -20,7 +20,7 @@ const sendOtpEmail = async (email, otp) => {
   <body>
     <div class="email-container">
       <div class="header">
-        <img src="https://via.placeholder.com/150x50?text=YOUR+LOGO" alt="Company Logo" />
+        <img src="https://kaj.wikipedia.org/wiki/File:Wikimedia-logo_black.svg" alt="Company Logo" />
       </div>
       <div class="content">
         <h2>Verify Your Email Address</h2>
@@ -37,6 +37,7 @@ const sendOtpEmail = async (email, otp) => {
     const response = await transport.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
+      date: new Date(),
       subject: "OTP for Registration",
       html: htmlTemplate.replace("{{OTP_CODE}}", otp),
     });
@@ -48,7 +49,7 @@ const sendOtpEmail = async (email, otp) => {
 };
 
 // Registration Completion Email
-const sendRegistrationCompletionEmail = async (email, name) => {
+const sendWelcomeEmail = async (email, name) => {
   const htmlTemplate = `<!DOCTYPE html>
 <html>
 <head>
@@ -68,7 +69,7 @@ const sendRegistrationCompletionEmail = async (email, name) => {
 <body>
   <div class="email-container">
     <div class="header">
-      <img src="https://via.placeholder.com/150x50?text=YOUR+LOGO" alt="Company Logo" />
+      <img src="https://kaj.wikipedia.org/wiki/File:Wikimedia-logo_black.svg" alt="Company Logo" />
     </div>
     <div class="content">
       <div class="welcome-text">Welcome, {{NAME}}!</div>
@@ -85,6 +86,7 @@ const sendRegistrationCompletionEmail = async (email, name) => {
     const response = await transport.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
+      date: new Date(),
       subject: "Registration Successful",
       html: htmlTemplate.replace("{{NAME}}", name),
     });
@@ -100,6 +102,6 @@ const sendRegistrationCompletionEmail = async (email, name) => {
 // order Placed mail
 
 module.exports = {
-  sendOtpEmail,
-  sendRegistrationCompletionEmail,
+  sendOTPEmail,
+  sendWelcomeEmail,
 };
