@@ -2,27 +2,104 @@ const transport = require("../config/emailConfig");
 
 // Registration Otp Email
 const sendOtpEmail = async (email, otp) => {
-  const response = await transport.send({
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: "OTP for Registration",
-    // text: `Your OTP for registration is: ${otp}`,
-    html: `<p>Your OTP for registration is: <strong>${otp}</strong></p>`,
-  });
-  return response;
+  const htmlTemplate = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Your OTP Code</title>
+    <style>
+      body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+      .email-container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
+      .header { background-color: #000000; padding: 20px; text-align: center; }
+      .header img { max-height: 50px; }
+      .content { padding: 30px; text-align: center; color: #333333; }
+      .otp-box { background-color: #f8f9fa; border: 2px dashed #cccccc; border-radius: 8px; font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #000000; padding: 20px; margin: 30px auto; width: fit-content; }
+      .footer { background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 12px; color: #888888; }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <div class="header">
+        <img src="https://via.placeholder.com/150x50?text=YOUR+LOGO" alt="Company Logo" />
+      </div>
+      <div class="content">
+        <h2>Verify Your Email Address</h2>
+        <p>Please use the following One-Time Password (OTP) to complete your registration. This code is valid for 10 minutes.</p>
+        <div class="otp-box">{{OTP_CODE}}</div>
+        <p>If you did not request this code, please ignore this email.</p>
+      </div>
+      <div class="footer">&copy; 2026 Your E-commerce Store. All rights reserved.</div>
+    </div>
+  </body>
+</html>`;
+
+  try {
+    const response = await transport.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "OTP for Registration",
+      html: htmlTemplate.replace("{{OTP_CODE}}", otp),
+    });
+    return response;
+  } catch (error) {
+    console.error("Failed to send OTP", error);
+    return null; // Safely return null on failure
+  }
 };
 
 // Registration Completion Email
-const sendRegistrationCompletionEmail = async (email) => {
-  const response = await transport.send({
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: "Registration Successful",
-    text: "Thank you for registering with us!",
-  });
-  return response;
+const sendRegistrationCompletionEmail = async (email, name) => {
+  const htmlTemplate = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Welcome to Our Store</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+    .email-container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .header { background-color: #000000; padding: 20px; text-align: center; }
+    .header img { max-height: 50px; }
+    .content { padding: 30px; text-align: center; color: #333333; }
+    .welcome-text { font-size: 24px; font-weight: bold; margin-bottom: 15px; color: #000000; }
+    .cta-button { display: inline-block; background-color: #000000; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; margin-top: 25px; margin-bottom: 15px; }
+    .footer { background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 12px; color: #888888; }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="header">
+      <img src="https://via.placeholder.com/150x50?text=YOUR+LOGO" alt="Company Logo" />
+    </div>
+    <div class="content">
+      <div class="welcome-text">Welcome, {{NAME}}!</div>
+      <p>Your registration is complete and your account is now active. We are thrilled to have you on board!</p>
+      <p>Discover the latest collections, exclusive deals, and much more.</p>
+      <a href="https://yourwebsite.com" class="cta-button">Start Shopping</a>
+    </div>
+    <div class="footer">&copy; 2026 Your E-commerce Store. All rights reserved.</div>
+  </div>
+</body>
+</html>`;
+
+  try {
+    const response = await transport.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Registration Successful",
+      html: htmlTemplate.replace("{{NAME}}", name),
+    });
+    return response;
+  } catch (error) {
+    console.error("Failed to send Welcome email", error);
+    return null;
+  }
 };
 
 // Promotion cart Product mail
 
 // order Placed mail
+
+module.exports = {
+  sendOtpEmail,
+  sendRegistrationCompletionEmail,
+};
