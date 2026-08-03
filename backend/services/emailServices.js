@@ -1,7 +1,7 @@
 const transport = require("../config/emailConfig");
 
 // Registration Otp Email
-const sendOTPEmail = async (email, otp) => {
+const sendOtpEmail = async (email, otp) => {
   const htmlTemplate = `<!doctype html>
 <html>
   <head>
@@ -102,6 +102,6 @@ const sendWelcomeEmail = async (email, name) => {
 // order Placed mail
 
 module.exports = {
-  sendOTPEmail,
+  sendOtpEmail,
   sendWelcomeEmail,
 };
