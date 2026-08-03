@@ -3,32 +3,23 @@ const router = express.Router();
 const {
   AddProduct,
   GetProducts,
-  GetProductBasedOnId,
-  DeleteProduct,
-  UpdateProduct,
-  FilterProductsOnPrice,
-  FilterProductsOnRatings,
-  getProductsWithPagination,
-  getProductsBasedOnPrice,
-  getProductsBasedOnBrand,
+  GetProductsBasedOnBrand,
+  GetProductsBasedOnPrice,
   getLimitedProducts,
+  updateProduct,
+  DeleteProduct,
+  getProductsOnUserId,
 } = require("../controller/ProductsController");
 
-const { isAdmin, isUser } = require("../middleware/userRoleAuth");
+const { isUser, isAdmin, isVendor } = require("../middleware/userRoleAuth");
 
-// Core CRUD Endpoints
-router.post("/addproduct", AddProduct);
-router.get("/getproducts", isUser, GetProducts);
-router.get("/getproduct/:id", GetProductBasedOnId);
-router.put("/updateproduct/:id", UpdateProduct);
-router.delete("/deleteproduct/:id", DeleteProduct);
-
-// Advanced Filtering & Pagination Endpoints
-router.get("/filterproducts/price", FilterProductsOnPrice);
-router.get("/filterproducts/ratings", FilterProductsOnRatings);
-router.get("/getproductspagination", getProductsWithPagination);
-router.get("/getproducts/price", getProductsBasedOnPrice);
-router.get("/getproducts/brand", getProductsBasedOnBrand);
-router.get("/getlimitedproducts", getLimitedProducts);
+router.post("/add-product", isVendor, AddProduct);
+router.get("/products", GetProducts);
+router.get("/products-brand", GetProductsBasedOnBrand);
+router.get("/products-price", GetProductsBasedOnPrice);
+router.get("/products-pagination", getLimitedProducts);
+router.put("/update-product/:id", isVendor, updateProduct);
+router.delete("/delete-product/:id", isVendor, DeleteProduct);
+router.get("/get-products", isVendor, getProductsOnUserId);
 
 module.exports = router;

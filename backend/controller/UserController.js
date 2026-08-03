@@ -1,113 +1,116 @@
+const Users = require("../model/users");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const Users = require("../model/users");
 
-// Fallback secret prevents the app from crashing if .env is missing
-const JWT_SECRET = process.env.JWT_SECRET || "my_super_secret_key_123";
-
-const register = async (req, res) => {
+// register
+const Register = async (req, res) => {
   try {
-    const { email, password, ...rest } = req.body;
-    const normalizedEmail = email?.toLowerCase().trim();
-    const trimmedPassword = password?.trim();
-
-    if (!normalizedEmail || !trimmedPassword) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+    const userDetails = req.body;
+    const foundUser = await Users.findOne({ email: userDetails.email });
+    if (foundUser == null) {
+      const hashedPassword = await bcrypt.hash(userDetails.password, 10);
+      await Users.insertOne({ ...userDetails, password: hashedPassword });
+      res.status(200).json({ message: "register successfully" });
+    } else {
+      res.status(501).json({ message: "user already exists" });
     }
-
-    if (await Users.findOne({ email: normalizedEmail })) {
-      return res.status(400).json({ message: "User already exists" });
-    }
-
-    const hashedPassword = await bcrypt.hash(trimmedPassword, 10);
-    const newUser = await Users.create({
-      ...rest,
-      email: normalizedEmail,
-      password: hashedPassword,
-    });
-
-    res
-      .status(201)
-      .json({ message: "User registered successfully", user: newUser });
-  } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Error registering user", error: err.message });
+  } catch (error) {
+    res.status(500).json({ message: "failed to register" });
+    console.log(error);
   }
 };
 
-const login = async (req, res) => {
+// login
+const Login = async (req, res) => {
   try {
-    const email = req.body.email?.toLowerCase().trim();
-    const password = req.body.password?.trim();
+    const { username, password } = req.body;
+    const foundUser = await Users.findOne({ email: username });
 
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
-    }
-
-    const foundUser = await Users.findOne({ email });
-    if (!foundUser)
-      return res.status(401).json({ message: "Invalid credentials" });
-
-    // Check password (with auto-upgrade for old un hashed passwords)
-    let isPasswordValid = false;
-    if (foundUser.password?.startsWith("$2")) {
-      isPasswordValid = await bcrypt.compare(password, foundUser.password);
-    } else if (password === foundUser.password) {
-      isPasswordValid = true;
-      foundUser.password = await bcrypt.hash(password, 10);
-      await foundUser.save();
-    }
-
-    if (!isPasswordValid)
-      return res.status(401).json({ message: "Invalid credentials" });
-
-    // Generate Token using the correct secret key
-    const token = jwt.sign(
-      {
-        id: foundUser._id,
-        role: foundUser.role,
-        username: foundUser.firstName,
-      },
-      JWT_SECRET,
-      { expiresIn: "1h" }, // Changed from 10m to 1h for easier testing
+    const isCorrectPassword = await bcrypt.compare(
+      password,
+      foundUser.password,
     );
-
-    res.status(200).json({ message: "Login successful", token });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ message: "Failed to login" });
+    if (foundUser == null) {
+      res.status(404).json({ message: "User Not found" });
+    } else if (isCorrectPassword) {
+      const token = await jwt.sign(
+        { id: foundUser._id, role: foundUser.role, username: foundUser.email },
+        process.env.Secret_Key,
+        {
+          expiresIn: "60M",
+        },
+      );
+      res.status(200).json({ message: "Login Successful", token });
+    } else {
+      res.status(401).json({ message: "invalid password" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "failed to login" });
+    console.log(error);
   }
 };
 
-const getAllUsers = async (req, res) => {
+// get all users
+const getUsers = async (req, res) => {
   try {
-    const users = await Users.find();
-    if (!users.length)
-      return res.status(404).json({ message: "No users found" });
-
-    res.status(200).json({ users });
-  } catch (e) {
-    res.status(500).json({ message: "Failed to get users" });
+    const foundUsers = await Users.find(
+      {},
+      {
+        firstName: 1,
+        lastName: 1,
+        email: 1,
+        role: 1,
+        phoneNo: 1,
+        gender: 1,
+        address: 1,
+        state: 1,
+      },
+    );
+    if (foundUsers.length == 0) {
+      res.status(404).json({ message: "Users not Found" });
+    }
+    res.status(200).json({ foundUsers });
+  } catch (error) {
+    res.status(500).json({ message: "failed to get user details" });
   }
 };
-
+// delete user
 const deleteUser = async (req, res) => {
   try {
     const deletedUser = await Users.findByIdAndDelete(req.params.id);
-    if (!deletedUser)
-      return res.status(404).json({ message: "Invalid user ID" });
-
-    res
-      .status(200)
-      .json({ message: "User deleted successfully", user: deletedUser });
-  } catch (e) {
-    res.status(500).json({ message: "Failed to delete user" });
+    if (deletedUser == null) {
+      res.status(404).json({ message: "invalid userId" });
+    }
+    res.status(200).json({ message: "user details deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "failed to delete user details" });
   }
 };
-
-module.exports = { register, login, getAllUsers, deleteUser };
+// update user Details
+const updateUserDetails = async (req, res) => {
+  try {
+    const userDetails = req.body;
+    if ((await Users.findById(req.params.id)) != null) {
+      const hashedPassword = await bcrypt.hash(userDetails.password, 10);
+      const updatedUser = await Users.findByIdAndUpdate(
+        req.params.id,
+        { ...userDetails, password: hashedPassword },
+        {
+          new: true,
+        },
+      );
+      res.status(200).json({ message: "updated successfully", updatedUser });
+    } else {
+      res.status(404).json({ message: "invalid userID" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "failed to update user details" });
+  }
+};
+module.exports = {
+  Register,
+  Login,
+  getUsers,
+  deleteUser,
+  updateUserDetails,
+};

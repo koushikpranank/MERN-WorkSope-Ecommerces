@@ -2,8 +2,11 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const DBconnection = require("./config/db");
+
+// Router Imports
 const userRouter = require("./routers/userRouter");
 const productRouter = require("./routers/productRouter");
+const cartRouter = require("./routers/cartRouter"); // <-- Added Cart Router
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -40,6 +43,7 @@ app.get("/", (req, res) => {
 });
 app.use("/api", userRouter);
 app.use("/api/products", productRouter);
+app.use("/api/cart", cartRouter); // <-- Added Cart Route
 
 // 404 Handler
 app.use((req, res) => {
