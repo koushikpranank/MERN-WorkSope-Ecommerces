@@ -3,22 +3,24 @@
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.login-container {
+.register-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
   margin: 0;
-  /* Added a subtle dark overlay to the background for a more professional look */
+  padding: 2rem;
+  /* Matches Login exactly */
   background:
     linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
     url("https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?q=80&w=1548&auto=format&fit=crop")
       no-repeat center center/cover;
 }
 
-.login-container > .login-card {
-  width: 25rem;
-  padding: 2.5rem 2rem;
+.register-container > .register-card {
+  width: 100%;
+  max-width: 45rem;
+  padding: 2.5rem 2.5rem;
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -26,14 +28,9 @@
   border-radius: 1.25rem;
   box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.25);
   color: #ffffff;
-  transition: transform 0.3s ease-in-out;
 }
 
-.login-container > .login-card:hover {
-  transform: translateY(-5px);
-}
-
-.login-card .login-title {
+.register-card .register-title {
   text-align: center;
   margin-bottom: 2rem;
   font-size: 2.2rem;
@@ -42,54 +39,60 @@
   text-transform: uppercase;
 }
 
-.login-card .login-title::first-letter {
+.register-card .register-title::first-letter {
   font-size: 4.5rem;
   font-weight: 900;
-  color: #1dd5c6; /* Professional Teal */
+  color: #1dd5c6; /* Matches Login Teal */
   text-shadow: 2px 4px 6px rgba(0, 0, 0, 0.4);
   line-height: 0.8;
   margin-right: 2px;
 }
 
-.login-title + form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+.register-form-group {
+  margin-bottom: 1.25rem;
 }
 
-.login-form-group label {
+.register-form-group label {
   font-size: 0.9rem;
   font-weight: 500;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   display: inline-block;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
-input[type="email"],
-input[type="password"] {
+input.form-control,
+select.form-select,
+textarea.form-control {
   width: 100%;
-  padding: 0.8rem 1rem;
-  background: rgba(255, 255, 255, 0.1);
+  padding: 0.7rem 1rem;
+  background: rgba(255, 255, 255, 0.1) !important;
   border: none;
   border-bottom: 2px solid rgba(255, 255, 255, 0.5);
   border-radius: 0.5rem 0.5rem 0 0;
-  color: #ffffff;
+  color: #ffffff !important;
   font-size: 1rem;
   outline: none;
+  box-shadow: none !important;
   transition: all 0.3s ease;
 }
 
-input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
+select.form-select option {
+  color: #000;
 }
 
-input[type="email"]:focus,
-input[type="password"]:focus {
-  background: rgba(255, 255, 255, 0.25);
-  border-bottom: 2px solid #1dd5c6; /* Matched to Teal */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
 }
+
+input.form-control:focus,
+select.form-select:focus,
+textarea.form-control:focus {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border-bottom: 2px solid #1dd5c6; /* Matches Login Teal */
+}
+
 .password-eye-icon {
   cursor: pointer;
   background: rgba(255, 255, 255, 0.1) !important;
@@ -99,8 +102,9 @@ input[type="password"]:focus {
   border-radius: 0 0.5rem 0 0;
 }
 
-.login-button {
+.register-button {
   width: 100%;
+  margin-top: 1rem;
   padding: 0.9rem;
   font-size: 1.1rem;
   font-weight: bold;
@@ -111,7 +115,7 @@ input[type="password"]:focus {
     90deg,
     #6fe95d,
     #1dd5c6
-  ); /* Refined Green to Teal gradient */
+  ); /* Matches Login Button */
   border: none;
   border-radius: 2rem;
   cursor: pointer;
@@ -119,12 +123,12 @@ input[type="password"]:focus {
   transition: all 0.3s ease;
 }
 
-.login-button:hover {
+.register-button:hover {
   background: linear-gradient(90deg, #40b862, #6bfff5);
-  transform: scale(1.03);
+  transform: scale(1.02);
   box-shadow: 0 6px 20px rgba(29, 213, 198, 0.6);
 }
 
-.login-button:active {
+.register-button:active {
   transform: scale(0.98);
 }
