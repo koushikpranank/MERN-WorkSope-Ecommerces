@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Form, Button, Container, Card } from "react-bootstrap";
+import axios from "axios";
 
 const Login = () => {
   const [formData, setFormData] = useState({ username: "", password: "" });
@@ -8,10 +9,22 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login Data:", formData);
-    axios.post("http://localhost:5001/api/login", formData);
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5001/api/login",
+        formData,
+      );
+      console.log("Login Success! Token:", response.data.token);
+      alert("Login successful!");
+      localStorage.setItem("token", response.data.token);
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      console.error("Login Failed:", errorMessage);
+      alert("Login failed: " + errorMessage);
+    }
   };
 
   return (

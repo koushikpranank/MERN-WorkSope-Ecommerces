@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Form, Button, Container, Card, Row, Col } from "react-bootstrap";
+import axios from "axios";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -18,17 +19,28 @@ const Register = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Registration Payload:", formData);
-    axios.post("http://localhost:5001/api/register", formData);
+    
+    try {
+      const response = await axios.post(
+        "http://localhost:5001/api/register",
+        formData,
+      );
+      console.log("Registration Success:", response.data);
+      alert("Registration successful!");
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      console.error("Registration Failed:", errorMessage);
+      alert("Registration failed: " + errorMessage);
+    }
   };
 
   return (
     <Container className="d-flex justify-content-center align-items-center mt-4 mb-5">
       <Card style={{ width: "40rem" }} className="p-4 shadow">
         <h3 className="text-center mb-4">Register</h3>
-        <Form onSubmit={handleSubmit}>
+        <Form onSubmit={handleNSubmit}>
           <Row>
             <Col md={6}>
               <Form.Group className="mb-3">

@@ -10,7 +10,7 @@ const App = () => {
 
   return (
     <>
-      {/* <Container className="mt-4">
+      <Container className="mt-4">
         <div className="text-center mb-4">
           <Button
             variant={showLogin ? "dark" : "outline-dark"}
@@ -28,11 +28,11 @@ const App = () => {
         </div>
 
         {showLogin ? <Login /> : <Register />}
-      </Container> */}
+      </Container>
 
-      <div>
+      {/* <div>
         <Test />
-      </div>
+      </div> */}
     </>
   );
 };
