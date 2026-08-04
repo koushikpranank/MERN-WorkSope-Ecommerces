@@ -1,0 +1,49 @@
+* {
+  box-sizing: border-box;
+}
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 3rem;
+}
+
+.login-container > .login-card {
+  width: 25rem;
+  padding: 1.5rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  border-radius: 0.375rem;
+}
+
+.login-card .login-title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.login-title + form {
+  padding-top: 0.5rem;
+}
+
+label ~ input {
+  display: block;
+}
+
+input[type="email"],
+input[type="password"] {
+  border-radius: 0.25rem;
+}
+
+.login-form-group {
+  margin-bottom: 1rem;
+}
+
+.login-button {
+  width: 100%;
+}
+
+button[type="submit"]:hover {
+  opacity: 0.9;
+  cursor: pointer;
+}

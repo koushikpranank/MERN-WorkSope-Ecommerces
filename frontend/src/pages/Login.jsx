@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Form, Button, Container, Card } from "react-bootstrap";
 import axios from "axios";
+import "../assets/css/login.css";
 
 const Login = () => {
   const [formData, setFormData] = useState({ username: "", password: "" });
@@ -28,11 +29,11 @@ const Login = () => {
   };
 
   return (
-    <Container className="d-flex justify-content-center align-items-center mt-5">
-      <Card style={{ width: "25rem" }} className="p-4 shadow">
-        <h3 className="text-center mb-4">Login</h3>
+    <Container className="login-container">
+      <Card className="login-card">
+        <h3 className="login-title">Login</h3>
         <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3">
+          <Form.Group className="login-form-group">
             <Form.Label>Email address</Form.Label>
             <Form.Control
               type="email"
@@ -43,7 +44,7 @@ const Login = () => {
             />
           </Form.Group>
 
-          <Form.Group className="mb-3">
+          <Form.Group className="login-form-group">
             <Form.Label>Password</Form.Label>
             <Form.Control
               type="password"
@@ -54,7 +55,7 @@ const Login = () => {
             />
           </Form.Group>
 
-          <Button variant="dark" type="submit" className="w-100">
+          <Button variant="dark" type="submit" className="login-button">
             Login
           </Button>
         </Form>
