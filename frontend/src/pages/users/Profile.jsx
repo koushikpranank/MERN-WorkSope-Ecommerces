@@ -1,6 +1,6 @@
 import React from "react";
 import UserNavBar from "../../components/UserNavBar";
-
+import UserFooter from "../../components/UserFooter";
 const Profile = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-violet-900">
@@ -47,6 +47,7 @@ const Profile = () => {
           </div>
         </div>
       </div>
+      <UserFooter />
     </div>
   );
 };

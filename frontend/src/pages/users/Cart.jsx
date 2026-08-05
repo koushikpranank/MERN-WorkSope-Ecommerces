@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import UserNavBar from "../../components/UserNavBar";
+import UserFooter from "../../components/UserFooter";
 
 const Cart = () => {
   return (
@@ -32,6 +33,7 @@ const Cart = () => {
           </Link>
         </div>
       </div>
+      <UserFooter />
     </div>
   );
 };

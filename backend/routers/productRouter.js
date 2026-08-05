@@ -14,7 +14,7 @@ const {
 const { isUser, isAdmin, isVendor } = require("../middleware/userRoleAuth");
 
 router.post("/add-product", isVendor, AddProduct);
-router.get("/products", GetProducts);
+router.get("/", GetProducts); // Fixed route to match /api/products
 router.get("/products-brand", GetProductsBasedOnBrand);
 router.get("/products-price", GetProductsBasedOnPrice);
 router.get("/products-pagination", getLimitedProducts);

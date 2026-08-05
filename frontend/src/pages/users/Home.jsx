@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import UserNavBar from "../../components/UserNavBar";
+import UserFooter from "../../components/UserFooter";
 
 const Home = () => {
   return (
@@ -93,6 +94,7 @@ const Home = () => {
           </div>
         </div>
       </div>
+      <UserFooter />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import UserNavBar from "../../components/UserNavBar";
+import UserFooter from "../../components/UserFooter";
 
 const About = () => {
   return (
@@ -39,6 +40,7 @@ const About = () => {
           </Link>
         </div>
       </div>
+      <UserFooter />
     </div>
   );
 };
