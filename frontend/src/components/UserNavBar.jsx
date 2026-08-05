@@ -42,7 +42,7 @@ const UserNavBar = () => {
           </li>
           <li>
             <Link
-              to="/profile"
+              to="/user-profile"
               className="px-4 py-2 bg-white/10 hover:bg-white/25 rounded-lg text-white no-underline! font-medium tracking-wide transition-all shadow-sm hover:shadow-md hover:scale-105 inline-block"
             >
               Profile
