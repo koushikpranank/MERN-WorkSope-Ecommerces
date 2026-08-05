@@ -23,3 +23,4 @@ router.delete("/delete-product/:id", isVendor, DeleteProduct);
 router.get("/get-products", isVendor, getProductsOnUserId);
 
 module.exports = router;
+//3 -> 25%

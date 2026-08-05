@@ -9,6 +9,8 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedBrand, setSelectedBrand] = useState("All");
+  const [sortBy, setSortBy] = useState("default");
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 8;
 
@@ -24,8 +26,6 @@ const Products = () => {
         }
 
         const data = await response.json();
-
-        // FIX: Handle backend response structure ({ message, allProducts })
         const productList = Array.isArray(data) ? data : data.allProducts || [];
         setProducts(productList);
       } catch (err) {
@@ -38,23 +38,57 @@ const Products = () => {
     fetchProducts();
   }, []);
 
-  // 1. Filter products safely by search
-  const filteredProducts = products.filter((product) =>
-    product?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  // Extract unique brands dynamically for filter options
+  const brands = [
+    "All",
+    ...new Set(products.map((p) => p.brand).filter(Boolean)),
+  ];
 
-  // 2. Pagination logic
+  // 1. Filter products by search & brand
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product?.name
+      ?.toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesBrand =
+      selectedBrand === "All" ||
+      product?.brand?.toLowerCase() === selectedBrand.toLowerCase();
+    return matchesSearch && matchesBrand;
+  });
+
+  // 2. Sort products
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    const priceA = parseFloat(a.price || a.cost || 0);
+    const priceB = parseFloat(b.price || b.cost || 0);
+
+    if (sortBy === "low-high") return priceA - priceB;
+    if (sortBy === "high-low") return priceB - priceA;
+    if (sortBy === "name-asc")
+      return (a.name || "").localeCompare(b.name || "");
+    return 0;
+  });
+
+  // 3. Pagination logic
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = filteredProducts.slice(
+  const currentProducts = sortedProducts.slice(
     indexOfFirstProduct,
     indexOfLastProduct,
   );
-  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+  const totalPages = Math.ceil(sortedProducts.length / productsPerPage);
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1); // Reset to page 1 when searching
+    setCurrentPage(1);
+  };
+
+  const handleBrandChange = (brand) => {
+    setSelectedBrand(brand);
+    setCurrentPage(1);
+  };
+
+  const handleSortChange = (e) => {
+    setSortBy(e.target.value);
+    setCurrentPage(1);
   };
 
   return (
@@ -82,8 +116,8 @@ const Products = () => {
             </p>
           </div>
 
-          {/* Search Bar */}
-          <div className="flex justify-center mb-12">
+          {/* Search and Filters Bar */}
+          <div className="flex flex-col md:flex-row justify-center items-center gap-4 mb-8">
             <input
               type="text"
               placeholder="Search products..."
@@ -91,7 +125,37 @@ const Products = () => {
               onChange={handleSearch}
               className="w-full max-w-md px-6 py-3 rounded-full bg-white/10 border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-400 backdrop-blur-md shadow-lg transition-all"
             />
+
+            <select
+              value={sortBy}
+              onChange={handleSortChange}
+              className="w-full md:w-auto px-6 py-3 rounded-full bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-teal-400 backdrop-blur-md shadow-lg transition-all cursor-pointer [&>option]:bg-gray-900 [&>option]:text-white"
+            >
+              <option value="default">Sort by: Default</option>
+              <option value="low-high">Price: Low to High</option>
+              <option value="high-low">Price: High to Low</option>
+              <option value="name-asc">Name: A to Z</option>
+            </select>
           </div>
+
+          {/* Brand Filter Pills */}
+          {brands.length > 1 && (
+            <div className="flex flex-wrap justify-center items-center gap-2 mb-12">
+              {brands.map((brand) => (
+                <button
+                  key={brand}
+                  onClick={() => handleBrandChange(brand)}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
+                    selectedBrand.toLowerCase() === brand.toLowerCase()
+                      ? "bg-linear-to-r from-teal-400 to-green-400 text-gray-900 shadow-md scale-105"
+                      : "bg-white/10 text-gray-300 hover:bg-white/20 border border-white/10"
+                  }`}
+                >
+                  {brand.charAt(0).toUpperCase() + brand.slice(1)}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Loading / Error States */}
           {loading ? (
@@ -138,7 +202,7 @@ const Products = () => {
                   ))
                 ) : (
                   <div className="col-span-full text-center text-gray-300 py-10">
-                    No products found matching "{searchTerm}".
+                    No products found matching your criteria.
                   </div>
                 )}
               </div>
