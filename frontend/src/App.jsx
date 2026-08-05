@@ -1,39 +1,35 @@
-import React, { useState } from "react";
+import React from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { Container, Button } from "react-bootstrap";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+// Auth Pages
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Test from "./Test";
+
+// User Pages
 import Home from "./pages/users/Home";
+import About from "./pages/users/About";
+import Cart from "./pages/users/Cart";
+import Products from "./pages/users/Products";
+import Profile from "./pages/users/Profile";
+
 const App = () => {
-  const [showLogin, setShowLogin] = useState(true);
-
   return (
-    <>
-      <Container className="mt-4">
-        <div className="text-center mb-4">
-          <Button
-            variant={showLogin ? "dark" : "outline-dark"}
-            onClick={() => setShowLogin(true)}
-            className="me-2"
-          >
-            Login
-          </Button>
-          <Button
-            variant={!showLogin ? "dark" : "outline-dark"}
-            onClick={() => setShowLogin(false)}
-          >
-            Register
-          </Button>
-        </div>
+    <BrowserRouter>
+      <Routes>
+        {/* Auth Routes */}
 
-        {showLogin ? <Login /> : <Register />}
-      </Container>
+        <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-      {/* <div>
-        <Test />
-      </div> */}
-    </>
+        {/* User Routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/profile" element={<Profile />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 
