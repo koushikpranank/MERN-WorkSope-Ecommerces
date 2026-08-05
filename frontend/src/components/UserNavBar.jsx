@@ -4,12 +4,12 @@ import "../index.css";
 
 const UserNavBar = () => {
   return (
-    <nav className="sticky top-0 z-50 bg-gradient-to-r from-violet-900/70 to-purple-800/70 backdrop-blur-md border-b border-white/20 text-white shadow-lg">
+    <nav className="sticky top-0 z-50 bg-linear-to-r from-violet-900/70 to-purple-800/70 backdrop-blur-md border-b border-white/20 text-white shadow-lg">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         {/* Brand Logo - Gradient Text */}
         <Link
           to="/"
-          className="text-3xl font-extrabold bg-gradient-to-r from-teal-300 to-green-300 bg-clip-text text-transparent !no-underline transition-opacity hover:opacity-80"
+          className="text-3xl font-extrabold text-white no-underline! transition-opacity hover:opacity-80"
         >
           MyStore
         </Link>
@@ -19,7 +19,7 @@ const UserNavBar = () => {
           <li>
             <Link
               to="/"
-              className="px-4 py-2 bg-white/10 hover:bg-white/25 rounded-lg text-white !no-underline font-medium tracking-wide transition-all shadow-sm hover:shadow-md hover:scale-105 inline-block"
+              className="px-4 py-2 bg-white/10 hover:bg-white/25 rounded-lg text-white no-underline! font-medium tracking-wide transition-all shadow-sm hover:shadow-md hover:scale-105 inline-block"
             >
               Home
             </Link>
@@ -27,7 +27,7 @@ const UserNavBar = () => {
           <li>
             <Link
               to="/products"
-              className="px-4 py-2 bg-white/10 hover:bg-white/25 rounded-lg text-white !no-underline font-medium tracking-wide transition-all shadow-sm hover:shadow-md hover:scale-105 inline-block"
+              className="px-4 py-2 bg-white/10 hover:bg-white/25 rounded-lg text-white no-underline! font-medium tracking-wide transition-all shadow-sm hover:shadow-md hover:scale-105 inline-block"
             >
               Products
             </Link>
@@ -35,7 +35,7 @@ const UserNavBar = () => {
           <li>
             <Link
               to="/cart"
-              className="px-4 py-2 bg-white/10 hover:bg-white/25 rounded-lg text-white !no-underline font-medium tracking-wide transition-all shadow-sm hover:shadow-md hover:scale-105 inline-block"
+              className="px-4 py-2 bg-white/10 hover:bg-white/25 rounded-lg text-white no-underline! font-medium tracking-wide transition-all shadow-sm hover:shadow-md hover:scale-105 inline-block"
             >
               Cart
             </Link>
@@ -43,7 +43,7 @@ const UserNavBar = () => {
           <li>
             <Link
               to="/profile"
-              className="px-4 py-2 bg-white/10 hover:bg-white/25 rounded-lg text-white !no-underline font-medium tracking-wide transition-all shadow-sm hover:shadow-md hover:scale-105 inline-block"
+              className="px-4 py-2 bg-white/10 hover:bg-white/25 rounded-lg text-white no-underline! font-medium tracking-wide transition-all shadow-sm hover:shadow-md hover:scale-105 inline-block"
             >
               Profile
             </Link>
@@ -51,7 +51,7 @@ const UserNavBar = () => {
           <li>
             <Link
               to="/about"
-              className="px-4 py-2 bg-white/10 hover:bg-white/25 rounded-lg text-white !no-underline font-medium tracking-wide transition-all shadow-sm hover:shadow-md hover:scale-105 inline-block"
+              className="px-4 py-2 bg-white/10 hover:bg-white/25 rounded-lg text-white no-underline! font-medium tracking-wide transition-all shadow-sm hover:shadow-md hover:scale-105 inline-block"
             >
               About
             </Link>
@@ -61,7 +61,7 @@ const UserNavBar = () => {
           <li className="ml-4">
             <Link
               to="/login"
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white !no-underline font-semibold py-2 px-6 rounded-full shadow-md transition-all hover:scale-105 hover:shadow-lg inline-block"
+              className="bg-linear-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white no-underline! font-semibold py-2 px-6 rounded-full shadow-md transition-all hover:scale-105 hover:shadow-lg inline-block"
             >
               Logout
             </Link>
