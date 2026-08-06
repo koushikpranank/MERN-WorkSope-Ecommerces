@@ -43,10 +43,17 @@ const Products = () => {
   // Handle Add to Cart API Call with DecodedToken integration
   const handleAddToCart = async (productId) => {
     try {
-      const userInfo = await DecodedToken();
+      const userInfo = DecodedToken();
 
       if (!userInfo) {
         throw new Error("Please log in to add items to your cart.");
+      }
+
+      const userId = userInfo.id || userInfo._id;
+      console.log(userId);
+
+      if (!userId) {
+        throw new Error("Invalid user ID found in session.");
       }
 
       const token = localStorage.getItem("token") || "";
@@ -58,9 +65,8 @@ const Products = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          userId: userInfo.id || userInfo._id, // Passes user ID if expected by backend body
+          userId,
           productId,
-          quantity: 1,
         }),
       });
 
@@ -239,7 +245,7 @@ const Products = () => {
                       </p>
                       <div className="flex items-center justify-between mt-auto">
                         <span className="text-xl font-extrabold text-teal-300">
-                          ${product.price}
+                          ${product.price || product.cost}
                         </span>
                         <button
                           onClick={() =>

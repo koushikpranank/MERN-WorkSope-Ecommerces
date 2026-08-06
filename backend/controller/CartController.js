@@ -10,20 +10,18 @@ const AddToCart = async (req, res) => {
     const userObjectId = new mongoose.Types.ObjectId(userId);
     const productObjectId = new mongoose.Types.ObjectId(productId);
 
-    let foundCartProduct = await Cart.findOne({
-      $or: [{ userId: userObjectId }, { userId: userId }],
-    });
+    let foundCartProduct = await Cart.findOne({ userId: userObjectId });
 
-    if (!foundCartProduct) {
+    if (foundCartProduct == null) {
       await Cart.create({
         userId: userObjectId,
-        productIds: [productObjectId],
+        productId: [productObjectId],
       });
     } else {
       await Cart.updateOne(
         { _id: foundCartProduct._id },
         {
-          $addToSet: { productIds: productObjectId },
+          $addToSet: { productId: productObjectId },
         },
       );
     }
@@ -170,28 +168,21 @@ const addQuantity = async (req, res) => {
 const getCartProducts = async (req, res) => {
   const { userId } = req.query;
   try {
-    const userQuery = mongoose.Types.ObjectId.isValid(userId)
-      ? {
-          $or: [
-            { userId: new mongoose.Types.ObjectId(userId) },
-            { userId: userId },
-          ],
-        }
-      : { userId: userId };
+    const cartDoc = await Cart.findOne({
+      userId: new mongoose.Types.ObjectId(userId),
+    });
 
-    const cartDoc = await Cart.findOne(userQuery);
-
-    if (!cartDoc || !cartDoc.productIds || cartDoc.productIds.length === 0) {
+    if (!cartDoc || !cartDoc.productId) {
       return res.status(404).json({ message: "Cart Products Not Found" });
     }
 
     const allCartProducts = await Cart.aggregate([
-      { $match: userQuery },
-      { $unwind: "$productIds" },
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      { $unwind: "$productId" },
       {
         $lookup: {
           from: "products",
-          localField: "productIds",
+          localField: "productId",
           foreignField: "_id",
           as: "details",
         },
