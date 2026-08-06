@@ -3,6 +3,7 @@ import UserNavBar from "../../components/UserNavBar";
 import ProductsCarousel from "../../components/ProductsCarousel";
 import ImageGallery from "../../components/ImageGallery";
 import UserFooter from "../../components/UserFooter";
+import DecodedToken from "../../services/DecodedToken";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -12,6 +13,7 @@ const Products = () => {
   const [selectedBrand, setSelectedBrand] = useState("All");
   const [sortBy, setSortBy] = useState("default");
   const [currentPage, setCurrentPage] = useState(1);
+  const [cartMessage, setCartMessage] = useState("");
   const productsPerPage = 8;
 
   // Fetch products from backend on component mount
@@ -37,6 +39,44 @@ const Products = () => {
 
     fetchProducts();
   }, []);
+
+  // Handle Add to Cart API Call with DecodedToken integration
+  const handleAddToCart = async (productId) => {
+    try {
+      const userInfo = await DecodedToken();
+
+      if (!userInfo) {
+        throw new Error("Please log in to add items to your cart.");
+      }
+
+      const token = localStorage.getItem("token") || "";
+
+      const response = await fetch("http://localhost:5001/api/cart/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userId: userInfo.id || userInfo._id, // Passes user ID if expected by backend body
+          productId,
+          quantity: 1,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to add product to cart.");
+      }
+
+      setCartMessage("Product added to cart successfully!");
+      setTimeout(() => setCartMessage(""), 3000);
+    } catch (err) {
+      setCartMessage(`Error: ${err.message}`);
+      setTimeout(() => setCartMessage(""), 3000);
+    }
+  };
 
   // Extract unique brands dynamically for filter options
   const brands = [
@@ -116,6 +156,13 @@ const Products = () => {
             </p>
           </div>
 
+          {/* Cart Feedback Banner */}
+          {cartMessage && (
+            <div className="mb-6 p-3 text-center bg-teal-500/20 border border-teal-400 text-teal-200 rounded-xl font-medium shadow-lg transition-all">
+              {cartMessage}
+            </div>
+          )}
+
           {/* Search and Filters Bar */}
           <div className="flex flex-col md:flex-row justify-center items-center gap-4 mb-8">
             <input
@@ -194,7 +241,12 @@ const Products = () => {
                         <span className="text-xl font-extrabold text-teal-300">
                           ${product.price}
                         </span>
-                        <button className="bg-linear-to-r from-teal-400 to-green-400 hover:from-teal-500 hover:to-green-500 text-gray-900 font-bold py-1.5 px-4 rounded-full shadow-md transition-transform hover:scale-105 cursor-pointer text-sm">
+                        <button
+                          onClick={() =>
+                            handleAddToCart(product._id || product.id)
+                          }
+                          className="bg-linear-to-r from-teal-400 to-green-400 hover:from-teal-500 hover:to-green-500 text-gray-900 font-bold py-1.5 px-4 rounded-full shadow-md transition-transform hover:scale-105 cursor-pointer text-sm"
+                        >
                           Add
                         </button>
                       </div>

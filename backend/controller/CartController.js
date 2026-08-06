@@ -1,66 +1,93 @@
 const Cart = require("../model/cart");
 const mongoose = require("mongoose");
 const { sendOrderPlacedEmail } = require("../services/emailServices");
-//add cart
+
+// Add cart
 const AddToCart = async (req, res) => {
   try {
     const { userId, productId } = req.body;
-    const foundCartProduct = await Cart.findOne({ userId: userId });
-    if (foundCartProduct == null) {
+
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const productObjectId = new mongoose.Types.ObjectId(productId);
+
+    let foundCartProduct = await Cart.findOne({
+      $or: [{ userId: userObjectId }, { userId: userId }],
+    });
+
+    if (!foundCartProduct) {
       await Cart.create({
-        userId: new mongoose.Types.ObjectId(userId),
-        productIds: new mongoose.Types.ObjectId(productId),
+        userId: userObjectId,
+        productIds: [productObjectId],
       });
     } else {
       await Cart.updateOne(
-        { userId: new mongoose.Types.ObjectId(userId) },
+        { _id: foundCartProduct._id },
         {
-          $addToSet: { productIds: new mongoose.Types.ObjectId(productId) },
+          $addToSet: { productIds: productObjectId },
         },
       );
     }
-    res.status(200).json({ message: "product added to cart successfully" });
+    return res
+      .status(200)
+      .json({ message: "product added to cart successfully" });
   } catch (error) {
-    res.status(500).json({ message: "failed to add cart" });
     console.log(error);
+    return res.status(500).json({ message: "failed to add cart" });
   }
 };
 
-//remove cart
+// Remove cart
 const RemoveCartProduct = async (req, res) => {
   try {
     const { userId, productId } = req.query;
-    const Result = await Cart.updateOne(
-      { userId: new mongoose.Types.ObjectId(userId) },
-      {
-        $pull: { productIds: new mongoose.Types.ObjectId(productId) },
-      },
-    );
+    const userQuery = mongoose.Types.ObjectId.isValid(userId)
+      ? {
+          $or: [
+            { userId: new mongoose.Types.ObjectId(userId) },
+            { userId: userId },
+          ],
+        }
+      : { userId: userId };
 
-    if (Result.matchedCount === 0) {
-      res.status(404).json({ message: "Invalid UserId" });
+    const Result = await Cart.updateOne(userQuery, {
+      $pull: { productIds: new mongoose.Types.ObjectId(productId) },
+    });
+
+    if (Result.matchedCount === 0 || Result.modifiedCount === 0) {
+      return res
+        .status(404)
+        .json({ message: "Invalid UserId or Product not found" });
     }
-    res.status(200).json({ message: "removed successfully" });
+    return res.status(200).json({ message: "removed successfully" });
   } catch (error) {
-    res.status(500).json({ message: "failed to remove product in cart" });
     console.log(error);
+    return res
+      .status(500)
+      .json({ message: "failed to remove product in cart" });
   }
 };
 
-//total cost of CartProducts
+// Total cost of CartProducts
 const getTotalCost = async (req, res) => {
   try {
     const { userId } = req.query;
+    const userQuery = mongoose.Types.ObjectId.isValid(userId)
+      ? {
+          $or: [
+            { userId: new mongoose.Types.ObjectId(userId) },
+            { userId: userId },
+          ],
+        }
+      : { userId: userId };
 
-    if ((await Cart.findById(userId)) == null) {
-      res.status(404).json({ message: "No Products Found" });
+    const cartExists = await Cart.findOne(userQuery);
+    if (!cartExists) {
+      return res.status(404).json({ message: "No Products Found" });
     }
 
     const Result = await Cart.aggregate([
       {
-        $match: {
-          userId: new mongoose.Types.ObjectId(userId),
-        },
+        $match: userQuery,
       },
       { $unwind: "$productIds" },
       {
@@ -75,21 +102,33 @@ const getTotalCost = async (req, res) => {
       {
         $group: {
           _id: "$userId",
-          totalCost: { $sum: "$ProductsDetails.cost" },
+          totalCost: { $sum: { $toDouble: "$ProductsDetails.cost" } },
         },
       },
     ]);
+
+    return res.status(200).json(Result[0] || { totalCost: 0 });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "failed to get total cost" });
+    return res.status(500).json({ message: "failed to get total cost" });
   }
 };
-//count cart Product Items
+
+// Count cart Product Items
 const addQuantity = async (req, res) => {
   try {
     const { userId, count, productId } = req.body;
+    const userQuery = mongoose.Types.ObjectId.isValid(userId)
+      ? {
+          $or: [
+            { userId: new mongoose.Types.ObjectId(userId) },
+            { userId: userId },
+          ],
+        }
+      : { userId: userId };
+
     const foundCartProduct = await Cart.find({
-      userId: new mongoose.Types.ObjectId(userId),
+      ...userQuery,
       productQuantity: {
         $elemMatch: { productId: new mongoose.Types.ObjectId(productId) },
       },
@@ -98,7 +137,7 @@ const addQuantity = async (req, res) => {
     if (foundCartProduct.length != 0) {
       await Cart.updateOne(
         {
-          userId: new mongoose.Types.ObjectId(userId),
+          ...userQuery,
           productQuantity: {
             $elemMatch: { productId: new mongoose.Types.ObjectId(productId) },
           },
@@ -109,34 +148,46 @@ const addQuantity = async (req, res) => {
           },
         },
       );
-      res.status(200).json({ message: "quantity added successfully" });
+      return res.status(200).json({ message: "quantity added successfully" });
     } else {
-      await Cart.updateOne(
-        { userId: new mongoose.Types.ObjectId(userId) },
-        {
-          $addToSet: {
-            productQuantity: {
-              productId: new mongoose.Types.ObjectId(productId),
-              count: count,
-            },
+      await Cart.updateOne(userQuery, {
+        $addToSet: {
+          productQuantity: {
+            productId: new mongoose.Types.ObjectId(productId),
+            count: count,
           },
         },
-      );
-      res.status(200).json({ message: "quantity added successfully" });
+      });
+      return res.status(200).json({ message: "quantity added successfully" });
     }
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "failed to add quantity" });
+    return res.status(500).json({ message: "failed to add quantity" });
   }
 };
-//get Products
+
+// Get Products
 const getCartProducts = async (req, res) => {
   const { userId } = req.query;
   try {
+    const userQuery = mongoose.Types.ObjectId.isValid(userId)
+      ? {
+          $or: [
+            { userId: new mongoose.Types.ObjectId(userId) },
+            { userId: userId },
+          ],
+        }
+      : { userId: userId };
+
+    const cartDoc = await Cart.findOne(userQuery);
+
+    if (!cartDoc || !cartDoc.productIds || cartDoc.productIds.length === 0) {
+      return res.status(404).json({ message: "Cart Products Not Found" });
+    }
+
     const allCartProducts = await Cart.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      { $match: userQuery },
       { $unwind: "$productIds" },
-      { $project: { productIds: 1, _id: 0 } },
       {
         $lookup: {
           from: "products",
@@ -148,12 +199,13 @@ const getCartProducts = async (req, res) => {
       { $unwind: "$details" },
     ]);
 
-    if (allCartProducts.length == 0) {
-      res.status(404).json({ message: "Cart Products Not Found" });
+    if (!allCartProducts || allCartProducts.length === 0) {
+      return res.status(404).json({ message: "Cart Products Not Found" });
     }
-    res.status(200).json({ allCartProducts });
+    return res.status(200).json({ allCartProducts });
   } catch (error) {
-    res.status(500).json({ message: "failed to get cart products" });
+    console.log(error);
+    return res.status(500).json({ message: "failed to get cart products" });
   }
 };
 

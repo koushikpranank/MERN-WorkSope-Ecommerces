@@ -9,6 +9,7 @@ import {
   InputGroup,
 } from "react-bootstrap";
 import { toast, ToastContainer } from "react-toastify";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "../assets/css/register.css";
 
@@ -29,6 +30,7 @@ const Register = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [showPassword, setShowPassword] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -50,10 +52,20 @@ const Register = () => {
           formData,
         );
         console.log("Registration Success:", response.data);
+
+        // Save token if returned on register, then head to main page
+        if (response.data.token) {
+          localStorage.setItem("token", response.data.token);
+        }
+
         toast.success("Registration successful!");
 
         setFormData(initialFormState);
         setIsOtpSent(false);
+
+        setTimeout(() => {
+          navigate("/login");
+        }, 1000);
       }
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message;
@@ -214,7 +226,7 @@ const Register = () => {
                 </Col>
               </Row>
 
-              <Form.Group className="register-form-group">
+              <Form.Group className="register-form-group mb-3">
                 <Form.Label>Address</Form.Label>
                 <Form.Control
                   as="textarea"
@@ -248,9 +260,20 @@ const Register = () => {
             </Form.Group>
           )}
 
-          <Button variant="dark" type="submit" className="register-button">
+          <Button
+            variant="dark"
+            type="submit"
+            className="register-button w-100 mb-3"
+          >
             {isOtpSent ? "Verify & Create Account" : "Send OTP"}
           </Button>
+
+          <div className="text-center">
+            <span className="text-muted">Already have an account? </span>
+            <Link to="/login" className="text-decoration-none fw-bold">
+              Login
+            </Link>
+          </div>
         </Form>
       </Card>
       <ToastContainer position="top-right" autoClose={3000} />
