@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { toast, ToastContainer } from "react-toastify";
 import UserNavBar from "../../components/UserNavBar";
 import ProductsCarousel from "../../components/ProductsCarousel";
 import ImageGallery from "../../components/ImageGallery";
@@ -13,7 +14,6 @@ const Products = () => {
   const [selectedBrand, setSelectedBrand] = useState("All");
   const [sortBy, setSortBy] = useState("default");
   const [currentPage, setCurrentPage] = useState(1);
-  const [cartMessage, setCartMessage] = useState("");
   const productsPerPage = 8;
 
   // Fetch products from backend on component mount
@@ -40,20 +40,21 @@ const Products = () => {
     fetchProducts();
   }, []);
 
-  // Handle Add to Cart API Call with DecodedToken integration
+  // Handle Add to Cart API Call with DecodedToken integration & Toast notification
   const handleAddToCart = async (productId) => {
     try {
       const userInfo = DecodedToken();
 
       if (!userInfo) {
-        throw new Error("Please log in to add items to your cart.");
+        toast.error("Please log in to add items to your cart.");
+        return;
       }
 
       const userId = userInfo.id || userInfo._id;
-      console.log(userId);
 
       if (!userId) {
-        throw new Error("Invalid user ID found in session.");
+        toast.error("Invalid user ID found in session.");
+        return;
       }
 
       const token = localStorage.getItem("token") || "";
@@ -76,11 +77,9 @@ const Products = () => {
         throw new Error(data.message || "Failed to add product to cart.");
       }
 
-      setCartMessage("Product added to cart successfully!");
-      setTimeout(() => setCartMessage(""), 3000);
+      toast.success("Product added to cart successfully!");
     } catch (err) {
-      setCartMessage(`Error: ${err.message}`);
-      setTimeout(() => setCartMessage(""), 3000);
+      toast.error(`Error: ${err.message}`);
     }
   };
 
@@ -161,13 +160,6 @@ const Products = () => {
               elevate your everyday experience.
             </p>
           </div>
-
-          {/* Cart Feedback Banner */}
-          {cartMessage && (
-            <div className="mb-6 p-3 text-center bg-teal-500/20 border border-teal-400 text-teal-200 rounded-xl font-medium shadow-lg transition-all">
-              {cartMessage}
-            </div>
-          )}
 
           {/* Search and Filters Bar */}
           <div className="flex flex-col md:flex-row justify-center items-center gap-4 mb-8">
@@ -302,6 +294,7 @@ const Products = () => {
       </div>
 
       <UserFooter />
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };

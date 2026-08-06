@@ -10,7 +10,11 @@ const isUser = async (req, res, next) => {
     await jwt.verify(token, process.env.Secret_Key);
     const decodedToken = await jwt.decode(token);
 
-    if (decodedToken.role !== "user" && decodedToken.role !== "admin") {
+    if (
+      decodedToken.role !== "user" &&
+      decodedToken.role !== "admin" &&
+      decodedToken.role !== "vendor"
+    ) {
       return res.status(403).json({ message: "access not found" });
     }
     req.user = decodedToken;

@@ -16,6 +16,7 @@ const AddToCart = async (req, res) => {
       await Cart.create({
         userId: userObjectId,
         productId: [productObjectId],
+        productQuantity: [{ productId: productObjectId, count: 1 }],
       });
     } else {
       await Cart.updateOne(
@@ -24,6 +25,32 @@ const AddToCart = async (req, res) => {
           $addToSet: { productId: productObjectId },
         },
       );
+
+      // Check if product quantity already exists, increment it if so, otherwise push it
+      const hasQuantityEntry = foundCartProduct.productQuantity?.some(
+        (q) => q.productId.toString() === productObjectId.toString(),
+      );
+
+      if (hasQuantityEntry) {
+        await Cart.updateOne(
+          {
+            _id: foundCartProduct._id,
+            "productQuantity.productId": productObjectId,
+          },
+          {
+            $inc: { "productQuantity.$.count": 1 },
+          },
+        );
+      } else {
+        await Cart.updateOne(
+          { _id: foundCartProduct._id },
+          {
+            $push: {
+              productQuantity: { productId: productObjectId, count: 1 },
+            },
+          },
+        );
+      }
     }
     return res
       .status(200)
@@ -38,18 +65,18 @@ const AddToCart = async (req, res) => {
 const RemoveCartProduct = async (req, res) => {
   try {
     const { userId, productId } = req.query;
-    const userQuery = mongoose.Types.ObjectId.isValid(userId)
-      ? {
-          $or: [
-            { userId: new mongoose.Types.ObjectId(userId) },
-            { userId: userId },
-          ],
-        }
-      : { userId: userId };
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const productObjectId = new mongoose.Types.ObjectId(productId);
 
-    const Result = await Cart.updateOne(userQuery, {
-      $pull: { productIds: new mongoose.Types.ObjectId(productId) },
-    });
+    const Result = await Cart.updateOne(
+      { userId: userObjectId },
+      {
+        $pull: {
+          productId: productObjectId,
+          productQuantity: { productId: productObjectId },
+        },
+      },
+    );
 
     if (Result.matchedCount === 0 || Result.modifiedCount === 0) {
       return res
@@ -69,38 +96,72 @@ const RemoveCartProduct = async (req, res) => {
 const getTotalCost = async (req, res) => {
   try {
     const { userId } = req.query;
-    const userQuery = mongoose.Types.ObjectId.isValid(userId)
-      ? {
-          $or: [
-            { userId: new mongoose.Types.ObjectId(userId) },
-            { userId: userId },
-          ],
-        }
-      : { userId: userId };
+    const userObjectId = new mongoose.Types.ObjectId(userId);
 
-    const cartExists = await Cart.findOne(userQuery);
-    if (!cartExists) {
+    const cartExists = await Cart.findOne({ userId: userObjectId });
+    if (!cartExists || !cartExists.productId) {
       return res.status(404).json({ message: "No Products Found" });
     }
 
     const Result = await Cart.aggregate([
       {
-        $match: userQuery,
+        $match: { userId: userObjectId },
       },
-      { $unwind: "$productIds" },
+      { $unwind: "$productId" },
       {
         $lookup: {
           from: "products",
-          localField: "productIds",
+          localField: "productId",
           foreignField: "_id",
           as: "ProductsDetails",
         },
       },
       { $unwind: "$ProductsDetails" },
       {
+        $addFields: {
+          matchedQuantityObj: {
+            $arrayElemAt: [
+              {
+                $filter: {
+                  input: { $ifNull: ["$productQuantity", []] },
+                  as: "pq",
+                  cond: { $eq: ["$$pq.productId", "$productId"] },
+                },
+              },
+              0,
+            ],
+          },
+        },
+      },
+      {
+        $addFields: {
+          itemCount: {
+            $cond: {
+              if: { $ne: ["$matchedQuantityObj", null] },
+              then: "$matchedQuantityObj.count",
+              else: 1,
+            },
+          },
+        },
+      },
+      {
         $group: {
           _id: "$userId",
-          totalCost: { $sum: { $toDouble: "$ProductsDetails.cost" } },
+          totalCost: {
+            $sum: {
+              $multiply: [
+                {
+                  $toDouble: {
+                    $ifNull: [
+                      "$ProductsDetails.cost",
+                      "$ProductsDetails.price",
+                    ],
+                  },
+                },
+                "$itemCount",
+              ],
+            },
+          },
         },
       },
     ]);
@@ -116,48 +177,34 @@ const getTotalCost = async (req, res) => {
 const addQuantity = async (req, res) => {
   try {
     const { userId, count, productId } = req.body;
-    const userQuery = mongoose.Types.ObjectId.isValid(userId)
-      ? {
-          $or: [
-            { userId: new mongoose.Types.ObjectId(userId) },
-            { userId: userId },
-          ],
-        }
-      : { userId: userId };
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const productObjectId = new mongoose.Types.ObjectId(productId);
 
-    const foundCartProduct = await Cart.find({
-      ...userQuery,
-      productQuantity: {
-        $elemMatch: { productId: new mongoose.Types.ObjectId(productId) },
+    const updateResult = await Cart.updateOne(
+      {
+        userId: userObjectId,
+        "productQuantity.productId": productObjectId,
       },
-    });
+      {
+        $set: { "productQuantity.$.count": count },
+      },
+    );
 
-    if (foundCartProduct.length != 0) {
+    if (updateResult.matchedCount === 0) {
       await Cart.updateOne(
+        { userId: userObjectId },
         {
-          ...userQuery,
-          productQuantity: {
-            $elemMatch: { productId: new mongoose.Types.ObjectId(productId) },
-          },
-        },
-        {
-          $set: {
-            "productQuantity.$.count": count,
+          $push: {
+            productQuantity: {
+              productId: productObjectId,
+              count: count,
+            },
           },
         },
       );
-      return res.status(200).json({ message: "quantity added successfully" });
-    } else {
-      await Cart.updateOne(userQuery, {
-        $addToSet: {
-          productQuantity: {
-            productId: new mongoose.Types.ObjectId(productId),
-            count: count,
-          },
-        },
-      });
-      return res.status(200).json({ message: "quantity added successfully" });
     }
+
+    return res.status(200).json({ message: "quantity added successfully" });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "failed to add quantity" });
@@ -168,16 +215,15 @@ const addQuantity = async (req, res) => {
 const getCartProducts = async (req, res) => {
   const { userId } = req.query;
   try {
-    const cartDoc = await Cart.findOne({
-      userId: new mongoose.Types.ObjectId(userId),
-    });
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const cartDoc = await Cart.findOne({ userId: userObjectId });
 
-    if (!cartDoc || !cartDoc.productId) {
+    if (!cartDoc || !cartDoc.productId || cartDoc.productId.length === 0) {
       return res.status(404).json({ message: "Cart Products Not Found" });
     }
 
     const allCartProducts = await Cart.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      { $match: { userId: userObjectId } },
       { $unwind: "$productId" },
       {
         $lookup: {
@@ -188,6 +234,33 @@ const getCartProducts = async (req, res) => {
         },
       },
       { $unwind: "$details" },
+      {
+        $addFields: {
+          matchedQuantityObj: {
+            $arrayElemAt: [
+              {
+                $filter: {
+                  input: { $ifNull: ["$productQuantity", []] },
+                  as: "pq",
+                  cond: { $eq: ["$$pq.productId", "$productId"] },
+                },
+              },
+              0,
+            ],
+          },
+        },
+      },
+      {
+        $addFields: {
+          count: {
+            $cond: {
+              if: { $ne: ["$matchedQuantityObj", null] },
+              then: "$matchedQuantityObj.count",
+              else: 1,
+            },
+          },
+        },
+      },
     ]);
 
     if (!allCartProducts || allCartProducts.length === 0) {

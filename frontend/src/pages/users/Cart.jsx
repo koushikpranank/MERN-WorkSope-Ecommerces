@@ -12,7 +12,6 @@ const Cart = () => {
 
   const fetchCartData = async () => {
     try {
-      setLoading(true);
       const userInfo = DecodedToken();
       if (!userInfo) {
         setCartItems([]);
@@ -23,7 +22,6 @@ const Cart = () => {
       const token = localStorage.getItem("token") || "";
       const userId = userInfo.id || userInfo._id;
 
-      // Fetch products and total cost concurrently
       const [productsRes, costRes] = await Promise.all([
         fetch(`http://localhost:5001/api/cart/products?userId=${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -69,7 +67,23 @@ const Cart = () => {
 
   const handleQuantityChange = async (productId, currentCount, delta) => {
     const newCount = currentCount + delta;
-    if (newCount < 1) return;
+
+    // If quantity goes below 1, automatically trigger removal
+    if (newCount < 1) {
+      handleRemove(productId);
+      return;
+    }
+
+    // Optimistically update the UI instantly
+    setCartItems((prevItems) =>
+      prevItems.map((item) => {
+        const prodId = item.details._id || item.details.id;
+        if (prodId === productId) {
+          return { ...item, count: newCount };
+        }
+        return item;
+      }),
+    );
 
     try {
       const userInfo = DecodedToken();
@@ -99,6 +113,7 @@ const Cart = () => {
     } catch (err) {
       setMessage(`Error: ${err.message}`);
       setTimeout(() => setMessage(""), 3000);
+      fetchCartData(); // Revert on error
     }
   };
 
